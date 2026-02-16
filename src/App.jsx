@@ -32,6 +32,11 @@ function App() {
       ),
     );
   };
+
+  const deleteTodo = (id) => {
+    const filter_todo = todos.filter((todo) => todo.id != id);
+    setTodos(filter_todo);
+  };
   return (
     <>
       <div className="min-h-screen bg-gray-50 py-8 px-4">
@@ -79,7 +84,10 @@ function App() {
                   <button className="text-gray-400 hover:text-gray-600">
                     <Edit2 size={18} />
                   </button>
-                  <button className="text-gray-400 hover:text-red-500">
+                  <button
+                    className="text-gray-400 hover:text-red-500 cursor-pointer"
+                    onClick={() => deleteTodo(todo.id)}
+                  >
                     <Trash2 size={18} />
                   </button>
                 </div>
