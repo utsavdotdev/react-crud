@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { Plus, Edit2, Trash2, Check } from "lucide-react";
+import { Plus, Edit2, Trash2, Check, Save, X } from "lucide-react";
 function App() {
   const [todos, setTodos] = useState(() => {
     const stored_todos = localStorage.getItem("todos");
     return stored_todos ? JSON.parse(stored_todos) : [];
   });
   const [input, setInput] = useState("");
+  const [editingId, setEditingId] = useState(null);
 
   useEffect(() => {
     localStorage.setItem("todos", JSON.stringify(todos));
@@ -33,9 +34,33 @@ function App() {
     );
   };
 
+  const startEdit = (id, text) => {
+    setEditingId(id);
+    setInput(text);
+  };
+
+  const saveEdit = () => {
+    if (editingId && input.trim()) {
+      setTodos(
+        todos.map((todo) =>
+          todo.id === editingId ? { ...todo, text: input } : todo,
+        ),
+      );
+      setEditingId(null);
+      setInput("");
+    }
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setInput("");
+  };
+
   const deleteTodo = (id) => {
     const filter_todo = todos.filter((todo) => todo.id != id);
     setTodos(filter_todo);
+    setEditingId(null);
+    setInput("");
   };
   return (
     <>
@@ -47,17 +72,29 @@ function App() {
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              onKeyPress={(e) => e.key === "Enter" && addTodo()}
+              onKeyPress={(e) =>
+                e.key === "Enter" && (editingId ? saveEdit() : addTodo())
+              }
               placeholder="Add a new todo..."
               className="flex-1 px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-gray-400"
             />
-            <button
-              onClick={addTodo}
-              className="px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700 flex items-center gap-2 cursor-pointer"
-            >
-              <Plus size={20} />
-              Add
-            </button>
+            {editingId ? (
+              <button
+                onClick={saveEdit}
+                className="px-4 py-2 bg-gray-800 text-white rounded hover:bg-green-700 flex items-center gap-2 cursor-pointer"
+              >
+                <Save size={20} />
+                Save
+              </button>
+            ) : (
+              <button
+                onClick={addTodo}
+                className="px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700 flex items-center gap-2 cursor-pointer"
+              >
+                <Plus size={20} />
+                Add
+              </button>
+            )}
           </div>
           <div className="space-y-2">
             {todos.map((todo) => (
@@ -81,9 +118,22 @@ function App() {
                   {todo.text}
                 </span>
                 <div className="flex-shrink-0 flex gap-2">
-                  <button className="text-gray-400 hover:text-gray-600">
-                    <Edit2 size={18} />
-                  </button>
+                  {editingId === todo.id ? (
+                    <button
+                      onClick={cancelEdit}
+                      className="text-gray-400 hover:text-red-600 cursor-pointer"
+                    >
+                      <X size={20} />
+                    </button>
+                  ) : (
+                    <button
+                      className="text-gray-400 hover:text-gray-600 cursor-pointer"
+                      onClick={() => startEdit(todo.id, todo.text)}
+                    >
+                      <Edit2 size={18} />
+                    </button>
+                  )}
+
                   <button
                     className="text-gray-400 hover:text-red-500 cursor-pointer"
                     onClick={() => deleteTodo(todo.id)}
