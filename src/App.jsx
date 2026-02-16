@@ -1,27 +1,28 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Edit2, Trash2, Check } from "lucide-react";
 function App() {
-  const [todos, setTodos] = useState([
-    {
-      id: 1,
-      text: "Go to Gym",
-      completed: false,
-    },
-    {
-      id: 2,
-      text: "Eat Breakfast",
-      completed: true,
-    },
-    {
-      id: 3,
-      text: "Do Homework",
-      completed: false,
-    },
-  ]);
+  const [todos, setTodos] = useState(() => {
+    const stored_todos = localStorage.getItem("todos");
+    return stored_todos ? JSON.parse(stored_todos) : [];
+  });
   const [input, setInput] = useState("");
 
+  useEffect(() => {
+    localStorage.setItem("todos", JSON.stringify(todos));
+  }, [todos]);
+
   const addTodo = () => {
-    console.log("Add Todo");
+    if (input.trim()) {
+      setTodos([
+        ...todos,
+        {
+          id: Date.now().toString(),
+          text: input,
+          completed: false,
+        },
+      ]);
+      setInput("");
+    }
   };
   return (
     <>
