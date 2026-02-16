@@ -24,6 +24,14 @@ function App() {
       setInput("");
     }
   };
+
+  const toggleTodo = (id) => {
+    setTodos(
+      todos.map((todo) =>
+        todo.id === id ? { ...todo, completed: !todo.completed } : todo,
+      ),
+    );
+  };
   return (
     <>
       <div className="min-h-screen bg-gray-50 py-8 px-4">
@@ -40,7 +48,7 @@ function App() {
             />
             <button
               onClick={addTodo}
-              className="px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700 flex items-center gap-2"
+              className="px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700 flex items-center gap-2 cursor-pointer"
             >
               <Plus size={20} />
               Add
@@ -53,11 +61,12 @@ function App() {
                 className="flex items-center gap-3 bg-white p-4 rounded border border-gray-200"
               >
                 <button
-                  className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center ${
+                  className={`flex-shrink-0 w-5 h-5 rounded border-2 cursor-pointer flex items-center justify-center ${
                     todo.completed
                       ? "bg-gray-800 border-gray-800"
                       : "border-gray-300"
                   }`}
+                  onClick={() => toggleTodo(todo.id)}
                 >
                   {todo.completed && <Check size={16} className="text-white" />}
                 </button>
