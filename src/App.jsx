@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Plus, Edit2, Trash2, Check, Save, X } from "lucide-react";
+import { toast } from "react-hot-toast";
 function App() {
   const [todos, setTodos] = useState(() => {
     const stored_todos = localStorage.getItem("todos");
@@ -22,6 +23,7 @@ function App() {
           completed: false,
         },
       ]);
+      toast.success("Todo added!");
       setInput("");
     }
   };
@@ -48,12 +50,14 @@ function App() {
       );
       setEditingId(null);
       setInput("");
+      toast.success("Todo updated!");
     }
   };
 
   const cancelEdit = () => {
     setEditingId(null);
     setInput("");
+    toast.info("Edit cancelled!");
   };
 
   const deleteTodo = (id) => {
@@ -61,6 +65,7 @@ function App() {
     setTodos(filter_todo);
     setEditingId(null);
     setInput("");
+    toast.success("Todo deleted!");
   };
   return (
     <>
