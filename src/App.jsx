@@ -1,9 +1,12 @@
 import { useState, useEffect } from "react";
 import { Plus, Edit2, Trash2, Check, Save, X } from "lucide-react";
 import { toast } from "react-hot-toast";
-
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000/api";
+import {
+  createTodo,
+  fetchTodos,
+  removeTodo,
+  updateTodo,
+} from "./api/todos";
 
 function App() {
   const [todos, setTodos] = useState([]);
@@ -12,14 +15,10 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchTodos = async () => {
+    const loadTodos = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/todos/`);
-        if (!response.ok) {
-          throw new Error("Unable to fetch todos");
-        }
-        const data = await response.json();
-        setTodos(data);
+        const todosData = await fetchTodos();
+        setTodos(todosData);
       } catch {
         toast.error("Failed to load todos");
       } finally {
@@ -27,7 +26,7 @@ function App() {
       }
     };
 
-    fetchTodos();
+    loadTodos();
   }, []);
 
   const addTodo = async () => {
@@ -36,22 +35,7 @@ function App() {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/todos/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          text: input.trim(),
-          completed: false,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Unable to add todo");
-      }
-
-      const createdTodo = await response.json();
+      const createdTodo = await createTodo(input.trim());
       setTodos((prevTodos) => [createdTodo, ...prevTodos]);
       toast.success("Todo added!");
       setInput("");
@@ -67,21 +51,9 @@ function App() {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/todos/${id}/`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          completed: !todo.completed,
-        }),
+      const updatedTodo = await updateTodo(id, {
+        completed: !todo.completed,
       });
-
-      if (!response.ok) {
-        throw new Error("Unable to update todo");
-      }
-
-      const updatedTodo = await response.json();
       setTodos((prevTodos) =>
         prevTodos.map((item) => (item.id === id ? updatedTodo : item)),
       );
@@ -101,21 +73,9 @@ function App() {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/todos/${editingId}/`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          text: input.trim(),
-        }),
+      const updatedTodo = await updateTodo(editingId, {
+        text: input.trim(),
       });
-
-      if (!response.ok) {
-        throw new Error("Unable to update todo");
-      }
-
-      const updatedTodo = await response.json();
       setTodos((prevTodos) =>
         prevTodos.map((todo) => (todo.id === editingId ? updatedTodo : todo)),
       );
@@ -135,14 +95,7 @@ function App() {
 
   const deleteTodo = async (id) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/todos/${id}/`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        throw new Error("Unable to delete todo");
-      }
-
+      await removeTodo(id);
       setTodos((prevTodos) => prevTodos.filter((todo) => todo.id !== id));
       setEditingId(null);
       setInput("");
