@@ -2,23 +2,13 @@
 
 A full-stack Todo app with:
 
-- Frontend: React + Vite + Tailwind CSS
-- Backend: Django + Django REST Framework
+- Frontend: React + Vite + Tailwind CSS (hosted on Vercel)
+- Backend: Django + Django REST Framework (deploy-ready for Railway)
+- Database: PostgreSQL on Railway
 
-## Features
+## Local Development
 
-- Create todo
-- Edit todo
-- Toggle completed status
-- Delete todo
-- Persistent storage with SQLite through Django API
-
-## Project Structure
-
-- `src/` - React frontend
-- `backend/` - Django backend
-
-## 1) Backend Setup
+### Backend
 
 ```bash
 cd backend
@@ -29,37 +19,46 @@ python manage.py migrate
 python manage.py runserver
 ```
 
-Backend URL:
-
-- `http://127.0.0.1:8000`
-
-## 2) Frontend Setup
-
-Open a new terminal in project root:
+### Frontend
 
 ```bash
 npm install
 npm run dev
 ```
 
-Frontend URL:
+## Railway Deployment (Django + PostgreSQL)
 
-- `http://127.0.0.1:5173`
+1. Push this repo to GitHub.
+2. In Railway, create a new project.
+3. Add two services:
+- `PostgreSQL`
+- `GitHub Repo` service for this project
+4. Set backend service **root directory** to `backend`.
+5. Railway will use `Procfile` (`web: ./start.sh`) to start the app.
+6. Add environment variables from `backend/.env.example`.
+7. Ensure these values are set:
+- `DJANGO_DEBUG=false`
+- `DJANGO_SECRET_KEY=<strong-secret>`
+- `DJANGO_ALLOWED_HOSTS=.railway.app,<your-backend-domain>`
+- `DJANGO_CORS_ALLOWED_ORIGINS=https://react-todo.utsavbhattarai.info.np`
+- `DJANGO_CSRF_TRUSTED_ORIGINS=https://react-todo.utsavbhattarai.info.np`
+8. Railway PostgreSQL provides `DATABASE_URL`; keep it attached to the Django service.
 
-## Environment Variables
+`start.sh` automatically runs:
 
-Copy from `.env.example` and adjust values if needed.
+- `python manage.py migrate --noinput`
+- `python manage.py collectstatic --noinput`
+- `gunicorn config.wsgi:application --bind 0.0.0.0:$PORT`
 
-Frontend env used by Vite:
+## Vercel Frontend Configuration
 
-- `VITE_API_BASE_URL` (default: `http://127.0.0.1:8000/api`)
+In your Vercel project, set:
 
-Backend env used by Django:
+```bash
+VITE_API_BASE_URL=https://<your-backend-domain>/api
+```
 
-- `DJANGO_DEBUG`
-- `DJANGO_ALLOWED_HOSTS`
-- `DJANGO_CORS_ALLOWED_ORIGINS`
-- `DJANGO_SECRET_KEY`
+Then redeploy the frontend.
 
 ## API Endpoints
 
@@ -69,9 +68,10 @@ Backend env used by Django:
 - `PATCH /api/todos/<id>/`
 - `DELETE /api/todos/<id>/`
 
-## Validation Commands
+## Validation
 
 ```bash
 cd backend && .venv/bin/python manage.py test
+backend/.venv/bin/python backend/manage.py check
 npm run build
 ```
