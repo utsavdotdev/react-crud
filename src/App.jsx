@@ -1,30 +1,62 @@
 import { useState, useEffect } from "react";
 import { Plus, Edit2, Trash2, Check, Save, X } from "lucide-react";
 import { toast } from "react-hot-toast";
+
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000/api";
+
 function App() {
-  const [todos, setTodos] = useState(() => {
-    const stored_todos = localStorage.getItem("todos");
-    return stored_todos ? JSON.parse(stored_todos) : [];
-  });
+  const [todos, setTodos] = useState([]);
   const [input, setInput] = useState("");
   const [editingId, setEditingId] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    localStorage.setItem("todos", JSON.stringify(todos));
-  }, [todos]);
+    const fetchTodos = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/todos/`);
+        if (!response.ok) {
+          throw new Error("Unable to fetch todos");
+        }
+        const data = await response.json();
+        setTodos(data);
+      } catch {
+        toast.error("Failed to load todos");
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  const addTodo = () => {
-    if (input.trim()) {
-      setTodos([
-        ...todos,
-        {
-          id: Date.now().toString(),
-          text: input,
-          completed: false,
+    fetchTodos();
+  }, []);
+
+  const addTodo = async () => {
+    if (!input.trim()) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/todos/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-      ]);
+        body: JSON.stringify({
+          text: input.trim(),
+          completed: false,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Unable to add todo");
+      }
+
+      const createdTodo = await response.json();
+      setTodos((prevTodos) => [createdTodo, ...prevTodos]);
       toast.success("Todo added!");
       setInput("");
+    } catch {
+      toast.error("Failed to add todo");
     }
   };
 
@@ -149,10 +181,13 @@ function App() {
               </div>
             ))}
           </div>
-          {todos.length === 0 && (
+          {!isLoading && todos.length === 0 && (
             <p className="text-center text-gray-400 mt-8">
               No todos yet. Add one to get started!
             </p>
+          )}
+          {isLoading && (
+            <p className="text-center text-gray-400 mt-8">Loading todos...</p>
           )}
         </div>
       </div>
