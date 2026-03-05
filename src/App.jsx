@@ -60,12 +60,34 @@ function App() {
     }
   };
 
-  const toggleTodo = (id) => {
-    setTodos(
-      todos.map((todo) =>
-        todo.id === id ? { ...todo, completed: !todo.completed } : todo,
-      ),
-    );
+  const toggleTodo = async (id) => {
+    const todo = todos.find((item) => item.id === id);
+    if (!todo) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/todos/${id}/`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          completed: !todo.completed,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Unable to update todo");
+      }
+
+      const updatedTodo = await response.json();
+      setTodos((prevTodos) =>
+        prevTodos.map((item) => (item.id === id ? updatedTodo : item)),
+      );
+    } catch {
+      toast.error("Failed to update todo");
+    }
   };
 
   const startEdit = (id, text) => {
@@ -73,16 +95,35 @@ function App() {
     setInput(text);
   };
 
-  const saveEdit = () => {
-    if (editingId && input.trim()) {
-      setTodos(
-        todos.map((todo) =>
-          todo.id === editingId ? { ...todo, text: input } : todo,
-        ),
+  const saveEdit = async () => {
+    if (!editingId || !input.trim()) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/todos/${editingId}/`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          text: input.trim(),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Unable to update todo");
+      }
+
+      const updatedTodo = await response.json();
+      setTodos((prevTodos) =>
+        prevTodos.map((todo) => (todo.id === editingId ? updatedTodo : todo)),
       );
       setEditingId(null);
       setInput("");
       toast.success("Todo updated!");
+    } catch {
+      toast.error("Failed to update todo");
     }
   };
 
@@ -92,12 +133,23 @@ function App() {
     toast.info("Edit cancelled!");
   };
 
-  const deleteTodo = (id) => {
-    const filter_todo = todos.filter((todo) => todo.id != id);
-    setTodos(filter_todo);
-    setEditingId(null);
-    setInput("");
-    toast.success("Todo deleted!");
+  const deleteTodo = async (id) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/todos/${id}/`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Unable to delete todo");
+      }
+
+      setTodos((prevTodos) => prevTodos.filter((todo) => todo.id !== id));
+      setEditingId(null);
+      setInput("");
+      toast.success("Todo deleted!");
+    } catch {
+      toast.error("Failed to delete todo");
+    }
   };
   return (
     <>
